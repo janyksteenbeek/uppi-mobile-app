@@ -22,7 +22,25 @@ export default function TabLayout() {
         options={{
           title: 'Monitors',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="desktop" size={24} color={color} />
+            <FontAwesome name="heartbeat" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="history" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="cog" size={24} color={color} />
           ),
         }}
       />

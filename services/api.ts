@@ -52,9 +52,40 @@ export interface Monitor {
 }
 
 export interface ProfileResponse {
-  // TODO: Add profile fields based on API response
   id: string;
-  // Add other fields as needed
+  name: string;
+  email: string;
+  email_verified_at: string;
+  created_at: string;
+  updated_at: string;
+  is_admin: number;
+}
+
+export interface PaginationLinks {
+  url: string | null;
+  label: string;
+  active: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  current_page: number;
+  data: T[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: PaginationLinks[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
+export interface AnomalyWithMonitor extends Anomaly {
+  monitor: Monitor;
+  checks: Check[];
 }
 
 class ApiClient {
@@ -168,6 +199,22 @@ class ApiClient {
 
   isAuthenticated(): boolean {
     return !!this.token && this.token.trim().length > 0;
+  }
+
+  async getAnomalies(page: number = 1): Promise<PaginatedResponse<AnomalyWithMonitor>> {
+    const response = await fetch(`${API_BASE_URL}/anomalies?page=${page}`, {
+      method: 'GET',
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to fetch anomalies');
+    }
+
+    return response.json();
   }
 }
 
