@@ -216,6 +216,22 @@ class ApiClient {
 
     return response.json();
   }
+
+  async getMonitorDetail(id: string): Promise<Monitor> {
+    const response = await fetch(`${API_BASE_URL}/monitors/${id}`, {
+      method: 'GET',
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to fetch monitor details');
+    }
+
+    return response.json();
+  }
 }
 
 export const api = ApiClient.getInstance(); 

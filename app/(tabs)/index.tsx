@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Animated, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Animated, SafeAreaView, TouchableOpacity } from 'react-native';
 import { api, Monitor } from '@/services/api';
 import { FontAwesome } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'expo-router';
 
 function PulsingCircle() {
   const [animation] = useState(new Animated.Value(0));
@@ -46,6 +47,7 @@ function PulsingCircle() {
 }
 
 function MonitorItem({ monitor }: { monitor: Monitor }) {
+  const router = useRouter();
   const getStatusColor = () => {
     return monitor.status === 'ok' ? '#22C55E' : '#DC2625';
   };
@@ -63,32 +65,37 @@ function MonitorItem({ monitor }: { monitor: Monitor }) {
   };
 
   return (
-    <View style={styles.monitorItem}>
-      <View style={styles.iconContainer}>
-        {monitor.status === 'fail' && <PulsingCircle />}
-        <FontAwesome 
-          name={getStatusIcon()} 
-          size={24} 
-          color={getStatusColor()} 
-          style={styles.statusIcon} 
-        />
-      </View>
-      <View style={styles.monitorInfo}>
-        <View style={styles.titleRow}>
-          <Text style={styles.monitorName}>{monitor.name}</Text>
-          <View style={[styles.typeBadge, { backgroundColor: monitor.type === 'http' ? '#3B82F6' : '#8B5CF6' }]}>
-            <Text style={styles.typeBadgeText}>{monitor.type.toUpperCase()}</Text>
-          </View>
+    <TouchableOpacity 
+      onPress={() => router.push(`/monitors/${monitor.id}`)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.monitorItem}>
+        <View style={styles.iconContainer}>
+          {monitor.status === 'fail' && <PulsingCircle />}
+          <FontAwesome 
+            name={getStatusIcon()} 
+            size={24} 
+            color={getStatusColor()} 
+            style={styles.statusIcon} 
+          />
         </View>
-        <Text style={styles.addressText}>
-          {monitor.address}
-          {monitor.port && <Text style={styles.portText}>:{monitor.port}</Text>}
-        </Text>
-        {monitor.status === 'fail' && (
-          <Text style={styles.downtimeText}>Down since {getDowntime()}</Text>
-        )}
+        <View style={styles.monitorInfo}>
+          <View style={styles.titleRow}>
+            <Text style={styles.monitorName}>{monitor.name}</Text>
+            <View style={[styles.typeBadge, { backgroundColor: monitor.type === 'http' ? '#3B82F6' : '#8B5CF6' }]}>
+              <Text style={styles.typeBadgeText}>{monitor.type.toUpperCase()}</Text>
+            </View>
+          </View>
+          <Text style={styles.addressText}>
+            {monitor.address}
+            {monitor.port && <Text style={styles.portText}>:{monitor.port}</Text>}
+          </Text>
+          {monitor.status === 'fail' && (
+            <Text style={styles.downtimeText}>Down since {getDowntime()}</Text>
+          )}
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
