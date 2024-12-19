@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { api, AnomalyWithMonitor, PaginatedResponse } from '@/services/api';
-import { FontAwesome } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { formatDistanceToNow, formatDistanceStrict } from 'date-fns';
 import { router } from 'expo-router';
 
@@ -28,7 +28,7 @@ function AnomalyItem({ anomaly }: { anomaly: AnomalyWithMonitor }) {
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <FontAwesome 
+        <Feather 
           name={getStatusIcon()} 
           size={20} 
           color="#4B5563"
@@ -140,7 +140,8 @@ export default function HistoryScreen() {
         ListHeaderComponent={<View style={styles.listHeader} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No incidents found</Text>
+            <Feather name="smile" size={24} color="#ccc" />
+            <Text style={styles.emptyText}>No anomalies found</Text>
           </View>
         }
       />
@@ -264,6 +265,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    paddingTop: 12,
     color: '#6B7280',
   },
 }); 

@@ -168,7 +168,8 @@ class ApiClient {
       throw new Error('Failed to fetch monitors');
     }
 
-    return response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   }
 
   async getProfile(): Promise<ProfileResponse> {
@@ -214,7 +215,11 @@ class ApiClient {
       throw new Error('Failed to fetch anomalies');
     }
 
-    return response.json();
+    const data = await response.json();
+    return {
+      ...data,
+      data: Array.isArray(data.data) ? data.data : [],
+    };
   }
 
   async getMonitorDetail(id: string): Promise<Monitor> {

@@ -1,5 +1,5 @@
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
@@ -22,7 +22,7 @@ export default function TabLayout() {
         options={{
           title: 'Monitors',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="heartbeat" size={24} color={color} />
+            <Feather name="activity" size={22} color={color} />
           ),
         }}
       />
@@ -31,7 +31,7 @@ export default function TabLayout() {
         options={{
           title: 'History',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="history" size={24} color={color} />
+            <Feather name="clock" size={22} color={color} />
           ),
         }}
       />
@@ -40,7 +40,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="cog" size={24} color={color} />
+            <Feather name="settings" size={22} color={color} />
           ),
         }}
       />

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, 
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { api } from '@/services/api';
 import { format } from 'date-fns';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Feather } from '@expo/vector-icons';
 
 interface Alert {
   id: string;
@@ -95,7 +95,7 @@ export default function AnomalyDetailScreen() {
           headerShadowVisible: false,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <FontAwesome name="chevron-left" size={16} color="#ffffff" />
+              <Feather name="chevron-left" size={16} color="#ffffff" />
               <Text style={styles.backText}>Back</Text>
             </TouchableOpacity>
           ),
@@ -139,38 +139,45 @@ export default function AnomalyDetailScreen() {
             </View>
 
             <Text style={styles.sectionTitle}>Alert History</Text>
-            {anomaly.triggers.map((trigger) => (
-              <View key={trigger.id} style={styles.triggerItem}>
-                <View style={styles.triggerHeader}>
-                  <View style={styles.triggerType}>
-                    <FontAwesome 
-                      name={trigger.type === 'down' ? 'arrow-down' : 'arrow-up'} 
-                      size={12} 
-                      color={trigger.type === 'down' ? '#DC2625' : '#22C55E'} 
-                    />
-                    <Text style={[styles.triggerTypeText, {
-                      color: trigger.type === 'down' ? '#DC2625' : '#22C55E'
-                    }]}>
-                      {trigger.type === 'down' ? 'Down' : 'Up'}
+            {(anomaly.triggers || []).length > 0 ? (
+              anomaly.triggers.map((trigger) => (
+                <View key={trigger.id} style={styles.triggerItem}>
+                  <View style={styles.triggerHeader}>
+                    <View style={styles.triggerType}>
+                      <Feather 
+                        name={trigger.type === 'down' ? 'arrow-down' : 'arrow-up'} 
+                        size={12} 
+                        color={trigger.type === 'down' ? '#DC2625' : '#22C55E'} 
+                      />
+                      <Text style={[styles.triggerTypeText, {
+                        color: trigger.type === 'down' ? '#DC2625' : '#22C55E'
+                      }]}>
+                        {trigger.type === 'down' ? 'Down' : 'Up'}
+                      </Text>
+                    </View>
+                    <Text style={styles.triggerTime}>
+                      {format(new Date(trigger.triggered_at), 'MMM d, HH:mm')}
                     </Text>
                   </View>
-                  <Text style={styles.triggerTime}>
-                    {format(new Date(trigger.triggered_at), 'MMM d, HH:mm')}
+                  <View style={styles.alertInfo}>
+                    <Text style={styles.alertLabel}>Notified via:</Text>
+                    {trigger.channels_notified.map((channel) => (
+                      <View key={channel} style={styles.channelBadge}>
+                        <Text style={styles.channelText}>{channel}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.alertDestination}>
+                    {trigger.alert.destination}
                   </Text>
                 </View>
-                <View style={styles.alertInfo}>
-                  <Text style={styles.alertLabel}>Notified via:</Text>
-                  {trigger.channels_notified.map((channel) => (
-                    <View key={channel} style={styles.channelBadge}>
-                      <Text style={styles.channelText}>{channel}</Text>
-                    </View>
-                  ))}
-                </View>
-                <Text style={styles.alertDestination}>
-                  {trigger.alert.destination}
-                </Text>
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Feather name="bell-off" size={24} color="#ccc" style={{ marginBottom: 8 }} />
+                <Text style={styles.emptyText}>No alerts sent yet</Text>
               </View>
-            ))}
+            )}
           </View>
         </ScrollView>
       </View>
@@ -334,5 +341,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginLeft: 4,
     fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6B7280',
   },
 }); 
