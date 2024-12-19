@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { api, AnomalyWithMonitor, PaginatedResponse } from '@/services/api';
 import { FontAwesome } from '@expo/vector-icons';
 import { formatDistanceToNow, formatDistanceStrict } from 'date-fns';
+import { router } from 'expo-router';
 
 function AnomalyItem({ anomaly }: { anomaly: AnomalyWithMonitor }) {
   const getStatusIcon = () => {
@@ -21,7 +22,11 @@ function AnomalyItem({ anomaly }: { anomaly: AnomalyWithMonitor }) {
   };
 
   return (
-    <View style={styles.anomalyItem}>
+    <TouchableOpacity 
+      style={styles.anomalyItem}
+      onPress={() => router.push(`/anomalies/${anomaly.id}`)}
+      activeOpacity={0.7}
+    >
       <View style={styles.iconContainer}>
         <FontAwesome 
           name={getStatusIcon()} 
@@ -49,7 +54,7 @@ function AnomalyItem({ anomaly }: { anomaly: AnomalyWithMonitor }) {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

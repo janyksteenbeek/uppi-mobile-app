@@ -232,6 +232,22 @@ class ApiClient {
 
     return response.json();
   }
+
+  async getAnomalyDetail(id: string): Promise<AnomalyWithMonitor> {
+    const response = await fetch(`${API_BASE_URL}/anomalies/${id}`, {
+      method: 'GET',
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to fetch anomaly details');
+    }
+
+    return response.json();
+  }
 }
 
 export const api = ApiClient.getInstance(); 
