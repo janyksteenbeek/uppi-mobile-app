@@ -3,9 +3,52 @@ import { Platform } from 'react-native';
 
 const API_BASE_URL = 'https://3589-62-250-63-239.ngrok-free.app/api';
 const USER_AGENT = Platform.OS === 'ios' ? 'UppiApple/1.0' : 'UppiAndroid/1.0';
+const TOKEN_KEY = '@uppi_auth_token';
 
 export interface TokenResponse {
   token: string;
+}
+
+export interface Check {
+  id: string;
+  monitor_id: string;
+  status: 'ok' | 'fail';
+  response_time: number | null;
+  response_code: number;
+  output: string;
+  checked_at: string;
+  created_at: string;
+  updated_at: string;
+  anomaly_id: string | null;
+}
+
+export interface Anomaly {
+  id: string;
+  monitor_id: string;
+  started_at: string;
+  ended_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Monitor {
+  id: string;
+  user_id: string;
+  type: 'http' | 'tcp';
+  address: string;
+  port: number | null;
+  name: string;
+  body: string | null;
+  expects: string | null;
+  is_enabled: boolean;
+  interval: number;
+  consecutive_threshold: number;
+  status: 'ok' | 'fail';
+  last_checked_at: string | null;
+  created_at: string;
+  updated_at: string;
+  last_check: Check;
+  anomalies: Anomaly[];
 }
 
 export interface ProfileResponse {
@@ -17,6 +60,7 @@ export interface ProfileResponse {
 class ApiClient {
   private static instance: ApiClient;
   private token: string | null = null;
+  private initialized: boolean = false;
 
   private constructor() {}
 
@@ -28,12 +72,24 @@ class ApiClient {
   }
 
   async init() {
-    const storedToken = await AsyncStorage.getItem('auth_token');
-    // Only set token if it's a non-empty string
-    this.token = storedToken && storedToken.trim() ? storedToken : null;
+    if (this.initialized) return;
+    
+    try {
+      const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
+      this.token = storedToken && storedToken.trim() ? storedToken.trim() : null;
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to load token:', error);
+      this.token = null;
+    }
   }
 
   private async getHeaders(): Promise<HeadersInit> {
+    // Ensure token is loaded
+    if (!this.initialized) {
+      await this.init();
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -51,11 +107,10 @@ class ApiClient {
     const response = await fetch(`${API_BASE_URL}/app/token`, {
       method: 'POST',
       headers: await this.getHeaders(),
-      body: JSON.stringify({ code: code }),
+      body: JSON.stringify({ code }),
     });
 
     if (!response.ok) {
-      console.log(response);
       throw new Error('Invalid code');
     }
 
@@ -64,9 +119,25 @@ class ApiClient {
       throw new Error('Invalid token received');
     }
     
-    this.token = data.token;
-    await AsyncStorage.setItem('auth_token', data.token);
+    this.token = data.token.trim();
+    await AsyncStorage.setItem(TOKEN_KEY, this.token);
     return data;
+  }
+
+  async getMonitors(): Promise<Monitor[]> {
+    const response = await fetch(`${API_BASE_URL}/monitors`, {
+      method: 'GET',
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to fetch monitors');
+    }
+
+    return response.json();
   }
 
   async getProfile(): Promise<ProfileResponse> {
@@ -81,8 +152,7 @@ class ApiClient {
 
     if (!response.ok) {
       if (response.status === 401) {
-        this.token = null;
-        await AsyncStorage.removeItem('auth_token');
+        await this.logout();
       }
       throw new Error('Failed to fetch profile');
     }
@@ -92,7 +162,8 @@ class ApiClient {
 
   async logout() {
     this.token = null;
-    await AsyncStorage.removeItem('auth_token');
+    this.initialized = false;
+    await AsyncStorage.removeItem(TOKEN_KEY);
   }
 
   isAuthenticated(): boolean {
