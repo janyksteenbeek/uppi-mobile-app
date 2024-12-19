@@ -209,10 +209,9 @@ export default function MonitorDetailScreen() {
                     {format(new Date(check.checked_at), 'MMM d, HH:mm')}
                   </Text>
                   {check.response_time && (
-                    <Text style={styles.responseTime}>{check.response_time}ms</Text>
+                    <Text style={styles.responseTime}>{check.response_time.toFixed(2)}ms</Text>
                   )}
                 </View>
-                <Text style={styles.checkOutput}>{check.output}</Text>
               </View>
             ))}
           </View>

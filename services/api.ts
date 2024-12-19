@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const API_BASE_URL = 'https://3589-62-250-63-239.ngrok-free.app/api';
+const API_BASE_URL = 'https://uppi.dev/api';
 const USER_AGENT = Platform.OS === 'ios' ? 'UppiApple/1.0' : 'UppiAndroid/1.0';
 const TOKEN_KEY = '@uppi_auth_token';
 
