@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Animated, SafeAreaView, TouchableOpacity } from 'react-native';
 import { api, Monitor } from '@/services/api';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Feather } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'expo-router';
 
@@ -53,7 +53,11 @@ function MonitorItem({ monitor }: { monitor: Monitor }) {
   };
 
   const getStatusIcon = () => {
-    return monitor.status === 'ok' ? 'check-circle' : 'times-circle';
+    return monitor.status === 'ok' ? 'check-circle' : 'x-circle';
+  };
+
+  const getTypeIcon = () => {
+    return monitor.type === 'http' ? 'globe' : 'server';
   };
 
   const getDowntime = () => {
@@ -72,7 +76,7 @@ function MonitorItem({ monitor }: { monitor: Monitor }) {
       <View style={styles.monitorItem}>
         <View style={styles.iconContainer}>
           {monitor.status === 'fail' && <PulsingCircle />}
-          <FontAwesome 
+          <Feather 
             name={getStatusIcon()} 
             size={24} 
             color={getStatusColor()} 
@@ -80,16 +84,17 @@ function MonitorItem({ monitor }: { monitor: Monitor }) {
           />
         </View>
         <View style={styles.monitorInfo}>
-          <View style={styles.titleRow}>
-            <Text style={styles.monitorName}>{monitor.name}</Text>
-            <View style={[styles.typeBadge, { backgroundColor: monitor.type === 'http' ? '#3B82F6' : '#8B5CF6' }]}>
+          <Text style={styles.monitorName}>{monitor.name}</Text>
+          <View style={styles.addressRow}>
+            <Text style={styles.addressText}>
+              {monitor.address}
+              {monitor.port && <Text style={styles.portText}>:{monitor.port}</Text>}
+            </Text>
+            <View style={styles.typeBadge}>
+              <Feather name={getTypeIcon()} size={12} color="#6B7280" style={styles.typeIcon} />
               <Text style={styles.typeBadgeText}>{monitor.type.toUpperCase()}</Text>
             </View>
           </View>
-          <Text style={styles.addressText}>
-            {monitor.address}
-            {monitor.port && <Text style={styles.portText}>:{monitor.port}</Text>}
-          </Text>
           {monitor.status === 'fail' && (
             <Text style={styles.downtimeText}>Down since {getDowntime()}</Text>
           )}
@@ -245,24 +250,37 @@ const styles = StyleSheet.create({
   monitorName: {
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8,
+    marginBottom: 4,
   },
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  typeBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '500',
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   addressText: {
     fontSize: 14,
     color: '#4B5563',
+    flex: 1,
   },
   portText: {
     color: '#9CA3AF',
+  },
+  typeBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  typeIcon: {
+    marginRight: 4,
+  },
+  typeBadgeText: {
+    color: '#6B7280',
+    fontSize: 12,
+    fontWeight: '500',
   },
   downtimeText: {
     fontSize: 14,
