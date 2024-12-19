@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, TouchableOpacity, SafeAreaView, Modal } from 'react-native';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Monitor, api } from '@/services/api';
 import { format } from 'date-fns';
@@ -12,6 +12,19 @@ export default function MonitorDetailScreen() {
   const [monitor, setMonitor] = useState<Monitor | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    data: { date: string; value: number; status: string } | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    data: null
+  });
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [chartLayout, setChartLayout] = useState({ y: 0, height: 0 });
 
   const loadMonitor = useCallback(async () => {
     try {
@@ -48,11 +61,13 @@ export default function MonitorDetailScreen() {
     .reverse()
     .map(check => ({
       time: format(new Date(check.checked_at), 'HH:mm'),
-      value: check.response_time || 0
+      fullDate: format(new Date(check.checked_at), 'MMM d, HH:mm'),
+      value: check.response_time || 0,
+      status: check.status
     }));
 
   const chartData = {
-    labels: responseTimes.map(rt => rt.time),
+    labels: responseTimes.map((rt, index) => index % 3 === 0 ? rt.time : ''),
     datasets: [{
       data: responseTimes.map(rt => rt.value)
     }]
@@ -106,6 +121,10 @@ export default function MonitorDetailScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2625" />
           }
+          onScroll={(e) => {
+            setScrollOffset(e.nativeEvent.contentOffset.y);
+          }}
+          scrollEventThrottle={16}
         >
           <View style={styles.content}>
             <View style={styles.statsContainer}>
@@ -123,7 +142,15 @@ export default function MonitorDetailScreen() {
               </View>
             </View>
 
-            <View style={styles.chartContainer}>
+            <View 
+              style={styles.chartContainer}
+              onLayout={(e) => {
+                setChartLayout({
+                  y: e.nativeEvent.layout.y,
+                  height: e.nativeEvent.layout.height
+                });
+              }}
+            >
               <Text style={styles.sectionTitle}>Response Time (ms)</Text>
               <LineChart
                 data={chartData}
@@ -138,9 +165,32 @@ export default function MonitorDetailScreen() {
                   style: {
                     borderRadius: 16,
                   },
+                  propsForDots: {
+                    r: "4",
+                    strokeWidth: "2",
+                    stroke: "#fff"
+                  },
+                  formatYLabel: (value) => `${value}ms`,
                 }}
                 bezier
                 style={styles.chart}
+                decorator={() => null}
+                onDataPointClick={({value, index, x, y}) => {
+                  const point = responseTimes[index];
+                  const adjustedY = y + chartLayout.y - scrollOffset;
+                  setTooltip({
+                    visible: true,
+                    x: x,
+                    y: adjustedY,
+                    data: {
+                      date: point.fullDate,
+                      value: value,
+                      status: point.status
+                    }
+                  });
+                }}
+                withDots={true}
+                withShadow={false}
               />
             </View>
 
@@ -168,6 +218,43 @@ export default function MonitorDetailScreen() {
           </View>
         </ScrollView>
       </View>
+
+      <Modal
+        visible={tooltip.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTooltip(prev => ({ ...prev, visible: false }))}
+      >
+        <TouchableOpacity 
+          style={styles.tooltipOverlay}
+          activeOpacity={1}
+          onPress={() => setTooltip(prev => ({ ...prev, visible: false }))}
+        >
+          <View style={[styles.tooltipContainer, {
+            top: tooltip.y + 120,
+            left: tooltip.x - 75,
+          }]}>
+            {tooltip.data && (
+              <>
+                <Text style={styles.tooltipTitle}>{tooltip.data.date}</Text>
+                <View style={styles.tooltipRow}>
+                  <Text style={styles.tooltipLabel}>Response time:</Text>
+                  <Text style={styles.tooltipValue}>{tooltip.data.value}ms</Text>
+                </View>
+                <View style={styles.tooltipRow}>
+                  <Text style={styles.tooltipLabel}>Status:</Text>
+                  <Text style={[
+                    styles.tooltipStatus,
+                    { color: tooltip.data.status === 'ok' ? '#4ADE80' : '#FACC15' }
+                  ]}>
+                    {tooltip.data.status === 'ok' ? 'Online' : 'Offline'}
+                  </Text>
+                </View>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -313,5 +400,49 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginLeft: 4,
     fontSize: 16,
+  },
+  tooltipOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  tooltipContainer: {
+    position: 'absolute',
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 150,
+  },
+  tooltipTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  tooltipRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  tooltipLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  tooltipValue: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  tooltipStatus: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 }); 
