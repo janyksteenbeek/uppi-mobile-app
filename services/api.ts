@@ -253,6 +253,35 @@ class ApiClient {
 
     return response.json();
   }
+
+  async registerPushToken(token: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/push`, {
+      method: 'PUT',
+      headers: await this.getHeaders(),
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to register push token');
+    }
+  }
+
+  async removePushToken(): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/push`, {
+      method: 'DELETE',
+      headers: await this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        await this.logout();
+      }
+      throw new Error('Failed to remove push token');
+    }
+  }
 }
 
 export const api = ApiClient.getInstance(); 

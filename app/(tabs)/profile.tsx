@@ -24,6 +24,20 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadProfile();
     checkNotificationPermissions();
+    // set or get device id from async storage
+    const getOrSetDeviceId = async () => {
+      try {
+        let deviceId = await AsyncStorage.getItem('@uppi_device_id');
+        if (!deviceId) {
+          deviceId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          await AsyncStorage.setItem('@uppi_device_id', deviceId);
+        }
+      } catch (error) {
+        console.error('Failed to get/set device ID:', error);
+      }
+    };
+
+    getOrSetDeviceId();
   }, []);
 
   const loadProfile = async () => {
@@ -39,17 +53,8 @@ export default function ProfileScreen() {
 
   const checkNotificationPermissions = async () => {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    setPushEnabled(existingStatus === 'granted');
-  };
-
-  const sendTestNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Test Notification',
-        body: 'Push notifications are working! 🎉',
-      },
-      trigger: null, // Send immediately
-    });
+    const storedValue = await AsyncStorage.getItem(PUSH_NOTIFICATIONS_KEY);
+    setPushEnabled(existingStatus === 'granted' && storedValue === 'true');
   };
 
   const togglePushNotifications = async (value: boolean) => {
@@ -65,23 +70,37 @@ export default function ProfileScreen() {
           return;
         }
 
-        // If permissions were granted, send a test notification
+        // Get the Expo push token
+        const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+
+        // Register the token with our API
+        await api.registerPushToken(expoPushToken);
+        await AsyncStorage.setItem(PUSH_NOTIFICATIONS_KEY, 'true');
+        setPushEnabled(true);
+
+        // Send a test notification
         await sendTestNotification();
       } else {
-        // User is turning off notifications
+        // Remove the token from the API
+        await api.removePushToken();
         await AsyncStorage.setItem(PUSH_NOTIFICATIONS_KEY, 'false');
         setPushEnabled(false);
-        
-        return;
       }
-
-      await AsyncStorage.setItem(PUSH_NOTIFICATIONS_KEY, value.toString());
-      setPushEnabled(value);
     } catch (error) {
       console.error('Failed to toggle push notifications:', error);
       Alert.alert('Error', 'Failed to toggle push notifications');
       setPushEnabled(!value); // Revert the toggle
     }
+  };
+
+  const sendTestNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Test Notification',
+        body: 'Push notifications are working! 🎉',
+      },
+      trigger: null, // Send immediately
+    });
   };
 
   const handleLogout = async () => {
@@ -143,7 +162,7 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     alignItems: 'center',
-    paddingTop: 60,
+    marginTop: 120,
   },
   avatar: {
     width: 100,

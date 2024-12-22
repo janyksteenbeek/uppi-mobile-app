@@ -16,7 +16,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.uppi.app"
+      "bundleIdentifier": "dev.uppi.app",
+      "usesNonExemptEncryption": false
     },
     "android": {
       "adaptiveIcon": {

@@ -9,9 +9,8 @@ export const LoginScreen = () => {
 
   const handleCodeChange = (text: string) => {
     // Only allow numbers and limit to 6 digits
-    const numericText = text.replace(/[^0-9]/g, '');
-    if (numericText.length <= 6) {
-      setCode(numericText);
+    if (text.length <= 6) {
+      setCode(text);
     }
   };
 
@@ -40,7 +39,7 @@ export const LoginScreen = () => {
         value={code}
         onChangeText={handleCodeChange}
         maxLength={6}
-        placeholder="123456"
+        placeholder="A1B2C3"
         placeholderTextColor="#ffffff80"
         secureTextEntry
         editable={!loading}
