@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "appVersionSource": "remote"
+  },
   "build": {
     "development": {
       "distribution": "internal",
@@ -19,6 +22,7 @@
       }
     },
     "production": {
+      "autoIncrement": true,
       "distribution": "store",
       "ios": {
         "enterpriseProvisioning": "universal"
