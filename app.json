@@ -10,7 +10,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/logo-white.png",
       "resizeMode": "contain",
       "backgroundColor": "#DC2625"
     },
@@ -24,12 +24,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#DC2625"
       },
+      "androidNavigationBar": {
+        "backgroundColor": "#DC2625"
+      },
       "package": "dev.uppi.app"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router"

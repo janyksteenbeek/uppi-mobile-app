@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Switch, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Switch, TouchableOpacity, ActivityIndicator, SafeAreaView, Alert, Platform } from 'react-native';
 import { api, ProfileResponse } from '@/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/auth';
@@ -24,20 +24,6 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadProfile();
     checkNotificationPermissions();
-    // set or get device id from async storage
-    const getOrSetDeviceId = async () => {
-      try {
-        let deviceId = await AsyncStorage.getItem('@uppi_device_id');
-        if (!deviceId) {
-          deviceId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-          await AsyncStorage.setItem('@uppi_device_id', deviceId);
-        }
-      } catch (error) {
-        console.error('Failed to get/set device ID:', error);
-      }
-    };
-
-    getOrSetDeviceId();
   }, []);
 
   const loadProfile = async () => {
@@ -70,16 +56,17 @@ export default function ProfileScreen() {
           return;
         }
 
-        // Get the Expo push token
-        const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+        // Get the Expo push token with proper configuration
+        const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync({
+          projectId: process.env.EXPO_PROJECT_ID, // Make sure this is set in your environment
+        });
+
+        console.log('Obtained push token:', expoPushToken); // Debug log
 
         // Register the token with our API
         await api.registerPushToken(expoPushToken);
         await AsyncStorage.setItem(PUSH_NOTIFICATIONS_KEY, 'true');
         setPushEnabled(true);
-
-        // Send a test notification
-        await sendTestNotification();
       } else {
         // Remove the token from the API
         await api.removePushToken();
@@ -87,21 +74,23 @@ export default function ProfileScreen() {
         setPushEnabled(false);
       }
     } catch (error) {
-      console.error('Failed to toggle push notifications:', error);
-      Alert.alert('Error', 'Failed to toggle push notifications');
+      console.error('Push notification error details:', {
+        error,
+        platform: Platform.OS,
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
+      Alert.alert(
+        'Push Notification Error',
+        Platform.select({
+          android: 'Failed to setup push notifications. Please check if Google Play Services is installed and up to date.',
+          default: 'Failed to toggle push notifications'
+        })
+      );
       setPushEnabled(!value); // Revert the toggle
     }
   };
 
-  const sendTestNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Test Notification',
-        body: 'Push notifications are working! 🎉',
-      },
-      trigger: null, // Send immediately
-    });
-  };
 
   const handleLogout = async () => {
     try {
